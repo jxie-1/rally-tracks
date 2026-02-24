@@ -34,7 +34,7 @@
     {
       "name": "wait-for-reshard",
       "operation": {
-        "operation-type": "wait-for-rehard",
+        "operation-type": "wait-for-reshard",
         "index": "logs-*"
       }
     }
