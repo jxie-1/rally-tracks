@@ -45,6 +45,10 @@ from shared.runners.remote_cluster import (
     ConfigureRemoteClusters,
     MultiClusterWrapper,
 )
+from shared.runners.reshard import (
+    StartReshard,
+    WaitForReshard,
+)
 from shared.runners.slm import create_slm
 from shared.runners.update_custom_templates import update_custom_templates
 from shared.runners.validate_package_assets import validate_package_assets
@@ -257,5 +261,8 @@ def register(registry):
 
     registry.register_runner("start-reindex-data-stream", StartReindexDataStream(), async_runner=True)
     registry.register_runner("wait-for-reindex-data-stream", WaitForReindexDataStream(), async_runner=True)
+
+    registry.register_runner("start-reshard", StartReshard(), async_runner=True)
+    registry.register_runner("wait-for-reshard", WaitForReshard(), async_runner=True)
 
     registry.register_runner("esql-profile", EsqlProfileRunner(), async_runner=True)
