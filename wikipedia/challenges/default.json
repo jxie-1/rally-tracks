@@ -239,25 +239,46 @@
       },
       {
         "parallel": {
-          "completed-by": "parallel-documents-indexing-query-string-search",
+          "completed-by": "search-baseline",
           "tasks": [
             {
-              "name": "parallel-documents-indexing-bulk",
+              "name": "index-baseline",
               "operation": "parallel-documents-indexing",
               "clients": {{ parallel_indexing_bulk_clients | default(1) | int }},
               "warmup-time-period": {{ parallel_indexing_bulk_warmup_time_period | default(10) | int }},
               "target-throughput": {{ parallel_indexing_bulk_target_throughput | default(1) | int }}
             },
             {
-              "name": "parallel-documents-indexing-query-string-search",
+              "name": "search-baseline",
               "operation": "query-string-search",
               "clients": {{ parallel_indexing_search_clients | default(20) | int }},
               "time-period": {{ parallel_indexing_search_time_period | default(300) | int }},
               "warmup-time-period": {{ parallel_indexing_search_warmup_time_period | default(10) | int }}
+            }
+          ]
+        }
+      },
+      {
+        "name": "reshard-split",
+        "operation": "reshard-split"
+      },
+      {
+        "parallel": {
+          "completed-by": "search-post",
+          "tasks": [
+            {
+              "name": "index-post",
+              "operation": "parallel-documents-indexing",
+              "clients": {{ parallel_indexing_bulk_clients | default(1) | int }},
+              "warmup-time-period": {{ parallel_indexing_bulk_warmup_time_period | default(10) | int }},
+              "target-throughput": {{ parallel_indexing_bulk_target_throughput | default(1) | int }}
             },
             {
-              "name": "reshard-split",
-              "operation": "reshard-split"
+              "name": "search-post",
+              "operation": "query-string-search",
+              "clients": {{ parallel_indexing_search_clients | default(20) | int }},
+              "time-period": {{ parallel_indexing_search_time_period | default(300) | int }},
+              "warmup-time-period": {{ parallel_indexing_search_warmup_time_period | default(10) | int }}
             }
           ]
         }
