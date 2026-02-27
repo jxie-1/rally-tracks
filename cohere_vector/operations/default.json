@@ -38,4 +38,17 @@
   "param-source": "knn-param-source",
   "k": 100,
   "num-candidates": 1000
+},
+{
+  "name": "reshard-split",
+  "operation-type": "raw-request",
+  "method": "POST",
+  "path": "/_internal/reshard/split",
+  "body": {
+    "index": "cohere",
+    "split_shard_count": "{{ split_shard_count | default(2) }}"
+  },
+  "headers": {
+    "Content-Type": "application/json"
+  }
 }
