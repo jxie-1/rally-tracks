@@ -239,46 +239,25 @@
       },
       {
         "parallel": {
-          "completed-by": "search-baseline",
+          "completed-by": "parallel-documents-indexing-query-string-search",
           "tasks": [
             {
-              "name": "index-baseline",
+              "name": "parallel-documents-indexing-bulk",
               "operation": "parallel-documents-indexing",
               "clients": {{ parallel_indexing_bulk_clients | default(1) | int }},
               "warmup-time-period": {{ parallel_indexing_bulk_warmup_time_period | default(10) | int }},
               "target-throughput": {{ parallel_indexing_bulk_target_throughput | default(1) | int }}
             },
             {
-              "name": "search-baseline",
+              "name": "parallel-documents-indexing-query-string-search",
               "operation": "query-string-search",
               "clients": {{ parallel_indexing_search_clients | default(20) | int }},
               "time-period": {{ parallel_indexing_search_time_period | default(300) | int }},
               "warmup-time-period": {{ parallel_indexing_search_warmup_time_period | default(10) | int }}
-            }
-          ]
-        }
-      },
-      {
-        "name": "reshard-split",
-        "operation": "reshard-split"
-      },
-      {
-        "parallel": {
-          "completed-by": "search-post",
-          "tasks": [
-            {
-              "name": "index-post",
-              "operation": "parallel-documents-indexing",
-              "clients": {{ parallel_indexing_bulk_clients | default(1) | int }},
-              "warmup-time-period": {{ parallel_indexing_bulk_warmup_time_period | default(10) | int }},
-              "target-throughput": {{ parallel_indexing_bulk_target_throughput | default(1) | int }}
             },
             {
-              "name": "search-post",
-              "operation": "query-string-search",
-              "clients": {{ parallel_indexing_search_clients | default(20) | int }},
-              "time-period": {{ parallel_indexing_search_time_period | default(300) | int }},
-              "warmup-time-period": {{ parallel_indexing_search_warmup_time_period | default(10) | int }}
+              "name": "delayed-reshard-split",
+              "operation": "delayed-reshard-split"
             }
           ]
         }

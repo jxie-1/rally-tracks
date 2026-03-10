@@ -268,4 +268,27 @@
   "headers": {
     "Content-Type": "application/json"
   }
+},
+{
+  "name": "delayed-reshard-split",
+  "operation-type": "composite",
+  "requests": [
+    {
+      "operation-type": "sleep",
+      "duration": {{ reshard_delay_seconds | default(30) }}
+    },
+    {
+      "name": "reshard-split",
+      "operation-type": "raw-request",
+      "method": "POST",
+      "path": "/_internal/reshard/split",
+      "body": {
+        "index": "wikipedia",
+        "split_shard_count": "{{ split_shard_count | default(2) }}"
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  ]
 }
