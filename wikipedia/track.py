@@ -414,6 +414,47 @@ class EsqlProfileRunner(runner.Runner):
         return "esql-profile"
 
 
+class RelocateDuringSplitRunner(runner.Runner):
+    """
+    Waits for a reshard split to start (target shards appear in the index) plus 60s, then moves the primary of
+    shard 0 to another node with POST /_cluster/reroute, to test that relocations cancel in-flight splits.
+    """
+
+    async def __call__(self, es, params):
+        import asyncio
+
+        index = params.get("index", "wikipedia")
+        initial_shard_count = int(runner.mandatory(params, "initial_shard_count", self))
+        shard_params = {"format": "json", "h": "shard,prirep,node"}
+
+        while True:
+            shards = await es.perform_request(method="GET", path=f"/_cat/shards/{index}", params=shard_params)
+            if any(int(s["shard"]) >= initial_shard_count for s in shards):
+                break
+            await asyncio.sleep(1)
+
+        # let the copy soak before relocating, then re-read the routing table
+        await asyncio.sleep(60)
+        shards = await es.perform_request(method="GET", path=f"/_cat/shards/{index}", params=shard_params)
+
+        primary = next(s for s in shards if int(s["shard"]) == 0 and s["prirep"] == "p")
+        from_node = primary["node"]
+        nodes = await es.perform_request(method="GET", path="/_cat/nodes", params={"format": "json", "h": "name,node.role"})
+        roles = {n["name"]: n["node.role"] for n in nodes}
+        used = {s["node"] for s in shards if int(s["shard"]) == 0}
+        to_node = next(n for n, r in roles.items() if r == roles[from_node] and n not in used)
+
+        await es.perform_request(
+            method="POST",
+            path="/_cluster/reroute",
+            body={"commands": [{"move": {"index": index, "shard": 0, "from_node": from_node, "to_node": to_node}}]},
+        )
+        return {"weight": 1, "unit": "ops", "success": True, "relocation.from_node": from_node, "relocation.to_node": to_node}
+
+    def __repr__(self, *args, **kwargs):
+        return "relocate-during-split"
+
+
 def register(registry):
     registry.register_param_source("query-search", QueryParamSource)
     registry.register_param_source("create-search-application-param-source", CreateSearchApplicationParamSource)
@@ -424,3 +465,4 @@ def register(registry):
     registry.register_param_source("retriever-search", RetrieverParamSource)
     registry.register_param_source("esql-search", EsqlSearchParamSource)
     registry.register_runner("esql-profile", EsqlProfileRunner(), async_runner=True)
+    registry.register_runner("relocate-during-split", RelocateDuringSplitRunner(), async_runner=True)

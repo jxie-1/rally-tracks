@@ -201,4 +201,50 @@
         }
       }
     ]
+  },
+  {
+    "name": "reshard-4",
+    "description": "reshard-3 plus a shard relocation issued once split target shards appear, to test that relocations cancel in-flight splits.",
+    "default": false,
+    "schedule": [
+      {
+        "name": "delete-index",
+        "operation": "delete-index"
+      },
+      {
+        "name": "create-index",
+        "operation": "create-index"
+      },
+      {
+        "name": "check-cluster-health",
+        "operation": "check-cluster-health"
+      },
+      {
+        "parallel": {
+          "completed-by": "parallel-documents-indexing",
+          "tasks": [
+            {
+              "name": "parallel-documents-indexing",
+              "operation": "initial-documents-indexing",
+              "warmup-time-period": {{ initial_indexing_bulk_warmup_time_period | default(40) | int }},
+              "clients": {{ initial_indexing_bulk_clients | default(5) | int }}
+            },
+            {
+              "name": "delayed-reshard-split",
+              "operation": "delayed-reshard-split"
+            },
+            {
+              "name": "relocate-during-split",
+              "operation": "relocate-during-split"
+            },
+            {
+              "name": "parallel-documents-indexing-query-string-search",
+              "operation": "query-string-search",
+              "clients": {{ parallel_indexing_search_clients | default(20) | int }},
+              "warmup-time-period": {{ parallel_indexing_search_warmup_time_period | default(40) | int }}
+            }
+          ]
+        }
+      }
+    ]
   }

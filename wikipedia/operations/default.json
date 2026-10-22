@@ -270,6 +270,12 @@
   }
 },
 {
+  "name": "relocate-during-split",
+  "operation-type": "relocate-during-split",
+  "index": "wikipedia",
+  "initial_shard_count": {{ number_of_shards | default(1) | int }}
+},
+{
   "name": "delayed-reshard-split",
   "operation-type": "composite",
   "requests": [
