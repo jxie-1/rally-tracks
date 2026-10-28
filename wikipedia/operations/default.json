@@ -273,7 +273,8 @@
   "name": "relocate-during-split",
   "operation-type": "relocate-during-split",
   "index": "wikipedia",
-  "initial_shard_count": {{ number_of_shards | default(1) | int }}
+  "initial_shard_count": {{ number_of_shards | default(1) | int }},
+  "delay_seconds": {{ relocation_delay_seconds | default(60) | int }}
 },
 {
   "name": "delayed-reshard-split",

@@ -416,7 +416,7 @@ class EsqlProfileRunner(runner.Runner):
 
 class RelocateDuringSplitRunner(runner.Runner):
     """
-    Waits for a reshard split to start (target shards appear in the index) plus 60s, then moves the primary of
+    Waits for a reshard split to start (target shards appear in the index) plus delay_seconds (default 60), then moves the primary of
     shard 0 to another node with POST /_cluster/reroute, to test that relocations cancel in-flight splits.
     """
 
@@ -434,7 +434,7 @@ class RelocateDuringSplitRunner(runner.Runner):
             await asyncio.sleep(1)
 
         # let the copy soak before relocating, then re-read the routing table
-        await asyncio.sleep(60)
+        await asyncio.sleep(float(params.get("delay_seconds", 60)))
         shards = await es.perform_request(method="GET", path=f"/_cat/shards/{index}", params=shard_params)
 
         primary = next(s for s in shards if int(s["shard"]) == 0 and s["prirep"] == "p")
