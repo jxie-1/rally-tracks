@@ -425,6 +425,20 @@ Note: `include_target_throughput` parameter is ignored in this challenge.
 * `ds_autosharding_max_threads` (default: 32) The maximum number of write threads in the auto *scaling* function.
 * `dsl_poll_interval` (default: "5m") A time value indicating the interval data stream lifecycle runs at. This is relevant in the context of auto sharding as data stream lifecycle periodically triggers the rollover operations that will recalcualte and implement the (auto)sharding scheme.
 
+### Parameters specific to logging-write-load-swing challenge
+
+This challenge indexes in a configurable number of steps of differing load and rolls over every `logs-*` data stream after each step. It is intended to expose write-load forecasting and shard placement issues when a stream's current load differs a lot from its history: the default steps are three short light generations followed by two 40 minute heavy ones, so the first heavy generation is forecast from the light ones and the second one also sees the first heavy generation in its history. The heavy steps are long on purpose: the balancer only reacts after a node has been hot for a while and moves shards at a limited rate, so a short heavy phase would end before any shard movement can be observed. For a quick smoke test of the challenge use shorter periods, e.g. `ws_time_periods: [60,60,60,120,120]`. Rollover is what computes the write-load forecast for the new write index, so a step's load only influences the forecast of the generations that follow it.
+
+Use `number_of_shards` and `number_of_replicas` to size the data streams, and run on a multi-node cluster: shard placement can't be observed on a single node.
+
+* `ws_clients` (default: [8,8,8,16,16]): An array with the number of indexing clients to be used in each step.
+* `ws_warmup_time_periods` (default: [0,0,0,0,0]): An array with warm-up time period, in seconds, of every step.
+* `ws_time_periods` (default: [300,300,300,2400,2400]): An array with time period, in seconds, of every step.
+* `ws_target_throughputs` (default: [1,1,1,8,8]): An array with target throughput of each step, expressed in requests/s. Please use `bulk_size` (default: 5000 in this challenge) to translate this into docs/s. Target throughput is not configured if the value is negative.
+* `ws_cluster_settings` (default: {}): A dictionary of persistent cluster settings to apply before the first step, e.g. to enable allocation features under test.
+
+The arrays must have the same length. Each step is followed by a rollover of all `logs-*` data streams, including the last one.
+
 ### Categorize Text (categorize-text)
 
 Runs the categorize-text aggregation with varying values of shard-size and with/without the use of a sampler

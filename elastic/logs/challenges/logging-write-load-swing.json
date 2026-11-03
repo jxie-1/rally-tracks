@@ -1,0 +1,72 @@
+{% import "rally.helpers" as rally %}
+{
+  "name": "logging-write-load-swing",
+  "description": "Indexes logs in steps of varying load, rolling over every data stream after each step. Intended to expose write-load forecasting and shard placement issues when a stream's load differs a lot from its history, e.g. a heavy daytime phase following several light overnight generations.",
+  "schedule": [
+    {% include "tasks/index-setup.json" %}
+    {%- set p_ws_bulk_size = (bulk_size | default(5000)) %}
+    {%- set p_ws_clients = (ws_clients | default([8,8,8,16,16])) %}
+    {%- set p_ws_warmup_time_periods = (ws_warmup_time_periods | default([0,0,0,0,0])) %}
+    {%- set p_ws_time_periods = (ws_time_periods | default([300,300,300,2400,2400])) %}
+    {%- set p_ws_target_throughputs = (ws_target_throughputs | default([1,1,1,8,8])) %}
+    {%- set p_ws_cluster_settings = (ws_cluster_settings | default({})) %}
+    {%- if p_ws_cluster_settings %},
+    {
+      "name": "update-write-load-settings",
+      "tags": ["setup"],
+      "operation": {
+        "operation-type": "put-settings",
+        "body": {
+          "persistent": {{ p_ws_cluster_settings | tojson }}
+        }
+      }
+    }
+    {%- endif %}
+    {%- for i in range(p_ws_clients | length) %},
+    {%- if p_ws_target_throughputs[i] < 0 %}
+    {
+      "name": "bulk-{{loop.index}}-c{{p_ws_clients[i]}}-b{{p_ws_bulk_size}}",
+      "clients": {{p_ws_clients[i]}},
+      "ignore-response-error-level": "{{error_level | default('non-fatal')}}",
+      "operation": {
+        "operation-type": "raw-bulk",
+        "param-source": "processed-source",
+        "time-format": "milliseconds",
+        "profile": "fixed_interval",
+        "bulk-size": {{ p_ws_bulk_size }},
+        "detailed-results": true,
+        "looped": true
+      },
+      "warmup-time-period": {{p_ws_warmup_time_periods[i]}},
+      "time-period": {{p_ws_time_periods[i]}}
+    },
+    {%- else %}
+    {
+      "name": "bulk-{{loop.index}}-c{{p_ws_clients[i]}}-b{{p_ws_bulk_size}}-t{{p_ws_target_throughputs[i]}}",
+      "clients": {{p_ws_clients[i]}},
+      "ignore-response-error-level": "{{error_level | default('non-fatal')}}",
+      "operation": {
+        "operation-type": "raw-bulk",
+        "param-source": "processed-source",
+        "time-format": "milliseconds",
+        "profile": "fixed_interval",
+        "bulk-size": {{ p_ws_bulk_size }},
+        "detailed-results": true,
+        "looped": true
+      },
+      "warmup-time-period": {{p_ws_warmup_time_periods[i]}},
+      "time-period": {{p_ws_time_periods[i]}},
+      "target-throughput": {{p_ws_target_throughputs[i]}}
+    },
+    {%- endif %}
+    {
+      "name": "rollover-{{loop.index}}",
+      "operation": {
+        "operation-type": "rollover-datastream",
+        "param-source": "datastream-source",
+        "data-stream": "logs-*"
+      }
+    }
+    {%- endfor %}
+  ]
+}
