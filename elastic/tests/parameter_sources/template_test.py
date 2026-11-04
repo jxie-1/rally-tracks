@@ -15,6 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import pytest
+from esrally import exceptions
+
 from shared.parameter_sources.templates import (
     ComponentTemplateParamSource,
     ComposableTemplateParamSource,
@@ -36,6 +39,27 @@ def test_composable_template_load():
     params = template_source.params()
     assert len(params["templates"]) == 1
     assert params["templates"][0][0] == "logs-endpoint.events.process"
+
+
+def test_composable_template_settings_override():
+    # used by the logs track to give individual streams their own number of shards (see the stream_shards parameter)
+    template_source = ComposableTemplateParamSource(
+        StaticTrack(), params={"template": "logs-endpoint.events.process", "settings": {"index": {"number_of_shards": 3}}}
+    )
+    params = template_source.params()
+    assert len(params["templates"]) == 1
+    assert params["templates"][0][0] == "logs-endpoint.events.process"
+    settings = params["templates"][0][1]["template"]["settings"]["index"]
+    assert settings["number_of_shards"] == 3
+    # the other settings of the template are kept
+    assert settings["codec"] == "best_compression"
+
+
+def test_composable_template_settings_override_unknown_template():
+    with pytest.raises(exceptions.InvalidSyntax):
+        ComposableTemplateParamSource(
+            StaticTrack(), params={"template": "logs-does-not-exist", "settings": {"index": {"number_of_shards": 3}}}
+        )
 
 
 def test_removal_of_default_pipeline():

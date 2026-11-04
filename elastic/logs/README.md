@@ -249,7 +249,8 @@ The following parameters are available:
 
 ### Indexing Parameters
 
-* `number_of_shards` (default: 1) - The number of primary shards to set per Data Stream. The same value is used for all Data Streams.
+* `number_of_shards` (default: 1) - The number of primary shards to set per Data Stream. The same value is used for all Data Streams, unless overridden with `stream_shards`.
+* `stream_shards` (default: `{}`) - A dictionary of the number of primary shards for individual Data Streams, keyed by the name of the stream's composable template, e.g. `{"logs-nginx.access": 2, "logs-system.syslog": 4}`. Streams that are not listed use `number_of_shards`. The override is applied to the composable template itself, because the shared `number_of_shards` setting would take precedence over a stream's `@custom` component template. An unknown template name is rejected.
 * `number_of_replicas` (default: 1) - The number of replicas to set per Data Stream. The same value is used for all Data Streams.
 * `refresh_interval` (default: unset) - The Data Stream refresh interval. It is unset by default to use the Elasticsearch default refresh interval.
 * `bulk_indexing_clients` (default: 8) - The number of clients issuing indexing requests.

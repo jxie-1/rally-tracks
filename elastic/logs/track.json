@@ -27,6 +27,8 @@
 {% set p_search_after_timestamp = (search_after_timestamp | default(1577880000000)) %}
 {% set p_include_esql_queries = (include_esql_queries | default(build_flavor != "serverless")) %}
 {% set p_exclude_serverless_templates = (exclude_serverless_templates | default(build_flavor == "serverless")) %}
+{# Number of shards per composable template (stream), overriding number_of_shards for that stream, e.g. {"logs-nginx.access": 2}. #}
+{% set p_stream_shards = (stream_shards | default({})) %}
 {% set p_throttle_indexing = (throttle_indexing | default(false)) %}
 {% set p_max_download_gb = (max_total_download_gb | default(2 * num_corpus)) %}
 {% set p_max_download_per_corpus_gb = ([p_max_download_gb / num_corpus, 1] | max | int ) %}

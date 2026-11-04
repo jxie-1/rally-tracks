@@ -53,6 +53,22 @@
     "remove-pipelines": false
   }
 },
+{#- Per-stream shard counts. The composable template's own settings take precedence over every component template, including the
+    shared number_of_shards, so the override is applied there, before the data streams are created. #}
+{%- for stream, shards in p_stream_shards.items() %}
+{
+  "name": "set-shards-{{ stream }}",
+  "tags": ["setup"],
+  "operation": {
+    "operation-type": "create-composable-template",
+    "param-source": "composable-template-source",
+    "template": "{{ stream }}",
+    "settings": {"index": {"number_of_shards": {{ shards | int }}}},
+    "remove-routing-shards": true,
+    "remove-pipelines": false
+  }
+},
+{%- endfor %}
 {
   "name": "create-required-data-streams",
   "tags": ["setup"],
