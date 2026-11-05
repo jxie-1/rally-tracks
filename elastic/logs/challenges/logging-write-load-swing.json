@@ -10,6 +10,8 @@
     {%- set p_ws_time_periods = (ws_time_periods | default([300,300,300,2400,2400])) %}
     {%- set p_ws_target_throughputs = (ws_target_throughputs | default([1,1,1,8,8])) %}
     {%- set p_ws_cluster_settings = (ws_cluster_settings | default({})) %}
+    {%- set p_ws_capture = (ws_capture | default(true)) %}
+    {%- set p_ws_capture_dir = (ws_capture_dir | default("~/write-load-swing")) %}
     {%- if p_ws_cluster_settings %},
     {
       "name": "update-write-load-settings",
@@ -67,6 +69,16 @@
         "data-stream": "logs-*"
       }
     }
+    {%- if p_ws_capture %},
+    {
+      "name": "capture-{{loop.index}}",
+      "operation": {
+        "operation-type": "capture-cluster-state",
+        "label": "after-step-{{loop.index}}",
+        "directory": {{ p_ws_capture_dir | tojson }}
+      }
+    }
+    {%- endif %}
     {%- endfor %}
   ]
 }

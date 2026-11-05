@@ -33,6 +33,7 @@ from shared.parameter_sources.track_params import TrackParamSource
 from shared.parameter_sources.workflow_selector import WorkflowSelectorParamSource
 from shared.runners import datastream, snapshot
 from shared.runners.bulk import RawBulkIndex
+from shared.runners.capture_cluster_state import capture_cluster_state
 from shared.runners.ilm import create_ilm
 from shared.runners.pipelines import create_pipeline
 from shared.runners.reindex_data_stream import (
@@ -82,6 +83,7 @@ def register(registry):
     registry.register_runner("delete-remote-datastream", datastream.DeleteRemoteDataStream(), async_runner=True)
     registry.register_runner("update-custom-templates", update_custom_templates, async_runner=True)
     registry.register_runner("validate-package-assets", validate_package_assets, async_runner=True)
+    registry.register_runner("capture-cluster-state", capture_cluster_state, async_runner=True)
 
     registry.register_param_source("processed-source", ProcessedCorpusParamSource)
 

@@ -437,8 +437,12 @@ Use `number_of_shards` and `number_of_replicas` to size the data streams, and ru
 * `ws_time_periods` (default: [300,300,300,2400,2400]): An array with time period, in seconds, of every step.
 * `ws_target_throughputs` (default: [1,1,1,8,8]): An array with target throughput of each step, expressed in requests/s. Please use `bulk_size` (default: 5000 in this challenge) to translate this into docs/s. Target throughput is not configured if the value is negative.
 * `ws_cluster_settings` (default: {}): A dictionary of persistent cluster settings to apply before the first step, e.g. to enable allocation features under test.
+* `ws_capture` (default: true): Whether to capture a snapshot of the cluster state after every rollover, see below.
+* `ws_capture_dir` (default: `~/write-load-swing`): The directory, on the machine running the load driver, to write the snapshots to.
 
 The arrays must have the same length. Each step is followed by a rollover of all `logs-*` data streams, including the last one.
+
+The snapshots are written to `<ws_capture_dir>/after-step-<n>/` by the `capture-cluster-state` operation, right after the rollover that ends step `n`. This is when the write load of the generation that was just written to has been stored in the cluster state, and its shards are still where they were during the load. A snapshot contains the placement of all shard copies (`shards.txt`), the stored write-load stats and forecasts (`state_stats.json`), the data streams and their backing indices, the live per shard copy write load including replicas (`indices_stats.json`), the cumulative write thread pool counters per node, the allocation per node and the desired balance. Benchmark tooling may stop Elasticsearch when the race ends, so this is the way to look at the cluster state afterwards without restarting it. Capturing is best effort: a request that fails is logged and skipped.
 
 ### Categorize Text (categorize-text)
 
